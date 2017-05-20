@@ -2,7 +2,7 @@
 
 
 function latest_git_tag () {
-  git tag -l | head -n1
+  git tag -l | tail -n1
 }
 
 function next_git_tag () {
