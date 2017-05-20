@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+
+
+function latest_git_tag () {
+  # git tag -l | head -n1
+  echo "v1.0.0"
+}
+
+function next_git_tag () {
+  local curr_tag="$(latest_git_tag)"
+  if [ -z "$curr_tag" ]; then
+    echo "v1.0.0"
+    return
+  fi
+
+  echo "$curr_tag" | perl -ne '/v(\d+)\.(\d+)\.(\d+)/; $v = $3+1; print "v$1.$2.$v\n"'
+}
+
+bake_task init "Init a development envirofnment"
+function init () {
+  go get github.com/goreleaser/goreleaser
+}
+
+bake_task release "Create & push a release to github"
+function release () {
+  # export GITHUB_TOKEN=`YOUR_TOKEN`
+  if [ -e "$HOME/.github.d/github.env" ]; then
+    source "$HOME/.github.d/github.env"
+  fi
+
+  if [ -z "${GITHUB_TOKEN:-}" ]; then
+    echo "Error: you have to set your GITHUB_TOKEN before cutting a release"
+    exit 1
+  fi
+  local next_tag="$(next_git_tag)"
+  echo "creating release with tag: $next_tag"
+  git tag -a "$next_tag" -m "Releasing: $next_tag"
+  goreleaser
+}
