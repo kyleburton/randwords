@@ -1,0 +1,8 @@
+build:
+  binary: randwords
+  goos:
+    - windows
+    - darwin
+    - linux
+  goarch:
+    - amd64
