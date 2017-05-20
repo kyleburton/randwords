@@ -2,8 +2,7 @@
 
 
 function latest_git_tag () {
-  # git tag -l | head -n1
-  echo "v1.0.0"
+  git tag -l | head -n1
 }
 
 function next_git_tag () {
