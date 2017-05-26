@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 
-
 function latest_git_tag () {
   git tag -l | tail -n1
 }
@@ -15,7 +14,7 @@ function next_git_tag () {
   echo "$curr_tag" | perl -ne '/v(\d+)\.(\d+)\.(\d+)/; $v = $3+1; print "v$1.$2.$v\n"'
 }
 
-bake_task init "Init a development envirofnment"
+bake_task init "Init a development environment"
 function init () {
   go get github.com/goreleaser/goreleaser
 }
@@ -35,4 +34,34 @@ function release () {
   echo "creating release with tag: $next_tag"
   git tag -a "$next_tag" -m "Releasing: $next_tag"
   goreleaser
+}
+
+bake_task generate-embedded-words-db "Generate the go code for the embedded word list."
+function generate-embedded-words-db () {
+  test -d tmp || mkdir tmp
+  test -e tmp/EOWL.zip || curl -o tmp/EOWL.zip "http://dreamsteep.com/downloads/word-games-and-wordsmith-utilities/121-the-english-open-word-list-eowl/file.html"
+  (
+  cd tmp
+  test -d EOWL-v1.1.2 || unzip EOWL.zip
+  cd ..
+  )
+
+  find "tmp/EOWL-v1.1.2/LF Delimited Format" -name '? Words.txt' -print0 \
+      | xargs -0 cat \
+      | grep -vE '[A-Z]' \
+      > tmp/all-words.txt
+
+  cat > words.go <<END
+package main
+
+var Words []string = []string{
+END
+
+  while read LINE; do
+      echo "   \"$LINE\"," >> words.go
+  done < tmp/all-words.txt
+
+  cat >> words.go <<END
+}
+END
 }
